@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campanhas Viagem Guanabara</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #2E75B6 0%, #185FA5 100%);
+      color: white;
+      padding: 20px 30px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .header-logo {
+      flex-shrink: 0;
+    }
+
+    .header-logo img {
+      height: 40px;
+      width: auto;
+    }
+
+    .header-content {
+      flex: 1;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    .header p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .sync-status {
+      font-size: 11px;
+      padding: 4px 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      margin-left: auto;
+    }
+
+    .sync-status.online {
+      color: #4ade80;
+    }
+
+    .sync-status.offline {
+      color: #fca5a5;
+    }
+
+    .tabs {
+      display: flex;
+      background: #f9f9f9;
+      border-bottom: 1px solid #ddd;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #666;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      background: #f0f0f0;
+      color: #2E75B6;
+    }
+
+    .tab-btn.active {
+      color: #2E75B6;
+      border-bottom-color: #2E75B6;
+    }
+
+    .content {
+      padding: 24px;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .tab-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #2E75B6;
+    }
+
+    .tab-subtitle {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+
+    .calendar-controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    .month-selector {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .month-selector select {
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .month-selector button {
+      padding: 6px 14px;
+      background: #2E75B6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .month-selector button:hover {
+      background: #1e5a96;
+    }
+
+    .calendar-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+      font-weight: 600;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .day-header {
+      text-align: center;
+      padding: 6px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+
+    .day-cell {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      transition: all 0.2s;
+      background: white;
+      position: relative;
+      overflow: hidden;
+      padding: 2px;
+      text-align: center;
+      gap: 2px;
+    }
+
+    .day-cell:hover {
+      border-color: #2E75B6;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .day-cell.empty {
+      background: #f9f9f9;
+      cursor: default;
+      border-color: #f0f0f0;
+    }
+
+    .day-cell.empty:hover {
+      border-color: #f0f0f0;
+      box-shadow: none;
+    }
+
+    .day-number {
+      font-size: 11px;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .day-campaign {
+      font-size: 8px;
+      color: #555;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
+    }
+
+    .day-colors {
+      width: 100%;
+      height: 6px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 0;
+      border-radius: 2px;
+    }
+
+    .color-segment {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .color-planejamento { background: #3B82F6; }
+    .color-temas { background: #9F5BED; }
+    .color-producao { background: #EC4899; }
+    .color-validacao { background: #10B981; }
+    .color-kickoff { background: #F59E0B; }
+    .color-subida { background: #14B8A6; }
+
+    .status-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .status-card {
+      padding: 12px;
+      border-radius: 4px;
+      border-left: 3px solid;
+      background: #f9f9f9;
+    }
+
+    .status-card.planejamento { border-color: #3B82F6; }
+    .status-card.temas { border-color: #9F5BED; }
+    .status-card.producao { border-color: #EC4899; }
+    .status-card.validacao { border-color: #10B981; }
+    .status-card.kickoff { border-color: #F59E0B; }
+    .status-card.subida { border-color: #14B8A6; }
+
+    .status-label {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 3px;
+      color: #666;
+    }
+
+    .status-count {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 1px solid #ddd;
+    }
+
+    .legend-item {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .legend-color {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid;
+      flex-shrink: 0;
+    }
+
+    .legend-color.planejamento { background: #3B82F6; border-color: #1E40AF; }
+    .legend-color.temas { background: #9F5BED; border-color: #6D28D9; }
+    .legend-color.producao { background: #EC4899; border-color: #9D174D; }
+    .legend-color.validacao { background: #10B981; border-color: #047857; }
+    .legend-color.kickoff { background: #F59E0B; border-color: #92400E; }
+    .legend-color.subida { background: #14B8A6; border-color: #0D9488; }
+
+    .legend-label {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .modal-subtitle {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+
+    .campaigns-list {
+      margin-bottom: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .campaign-item {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .campaign-item:last-child {
+      border-bottom: none;
+    }
+
+    .campaign-item-name {
+      font-weight: 500;
+      color: #333;
+      flex: 1;
+    }
+
+    .campaign-item-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .campaign-item-btn {
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .campaign-item-btn:hover {
+      background: #f5f5f5;
+    }
+
+    .campaign-item-btn.edit {
+      color: #2E75B6;
+    }
+
+    .campaign-item-btn.remove {
+      color: #d32f2f;
+    }
+
+    .campaign-form {
+      background: #f9f9f9;
+      padding: 14px;
+      border-radius: 4px;
+      margin-bottom: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #333;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #2E75B6;
+      background: #f8fbff;
+    }
+
+    .phase-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .phase-btn {
+      padding: 8px;
+      border: 1.5px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .phase-btn:hover {
+      background: #f5f5f5;
+    }
+
+    .phase-btn.planejamento { border-color: #3B82F6; color: #3B82F6; }
+    .phase-btn.temas { border-color: #9F5BED; color: #9F5BED; }
+    .phase-btn.producao { border-color: #EC4899; color: #EC4899; }
+    .phase-btn.validacao { border-color: #10B981; color: #10B981; }
+    .phase-btn.kickoff { border-color: #F59E0B; color: #F59E0B; }
+    .phase-btn.subida { border-color: #14B8A6; color: #14B8A6; }
+
+    .phase-btn.active {
+      background: currentColor;
+      color: white;
+      border-width: 2px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .form-actions button {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .form-actions .btn-add {
+      background: #2E75B6;
+      color: white;
+      border-color: #2E75B6;
+    }
+
+    .form-actions .btn-add:hover {
+      background: #1e5a96;
+    }
+
+    .form-actions .btn-cancel {
+      background: white;
+    }
+
+    .form-actions .btn-cancel:hover {
+      background: #f5f5f5;
+    }
+
+    .clear-btn {
+      padding: 8px 14px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #d32f2f;
+      width: 100%;
+    }
+
+    .clear-btn:hover {
+      background: #ffe0e0;
+      border-color: #d32f2f;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+      font-size: 12px;
+    }
+
+    thead {
+      background: #e8f1f8;
+    }
+
+    th {
+      padding: 10px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      color: #2E75B6;
+      border-bottom: 1px solid #ddd;
+    }
+
+    td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    select {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #2E75B6;
+      background: #f8fbff;
+    }
+
+    .btn-remove {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      color: #d32f2f;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .btn-remove:hover {
+      background: #ffe0e0;
+      border-color: #d32f2f;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: 1px solid #ddd;
+      background: white;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .btn:hover {
+      background: #f5f5f5;
+      border-color: #2E75B6;
+      color: #2E75B6;
+    }
+
+    .btn-primary {
+      background: #2E75B6;
+      color: white;
+      border-color: #2E75B6;
+    }
+
+    .btn-primary:hover {
+      background: #1e5a96;
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 20px;
+      }
+
+      .header h1 {
+        font-size: 20px;
+      }
+
+      .content {
+        padding: 16px;
+      }
+
+      .calendar-grid {
+        gap: 4px;
+      }
+
+      .day-cell {
+        font-size: 10px;
+      }
+
+      .phase-buttons {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-logo">
+        <img src="https://cdn.jsdelivr.net/gh/seu-repo/logo-guanabara.png" alt="Guanabara Logo" onerror="this.style.display='none'">
+      </div>
+      <div class="header-content">
+        <h1>Campanhas Viagem Guanabara</h1>
+        <p>Planejamento e acompanhamento de campanhas por fase</p>
+      </div>
+      <div class="sync-status online" id="syncStatus">🔄 Sincronizando...</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="changeTab('calendario')">📅 Calendário</button>
+      <button class="tab-btn" onclick="changeTab('planejamento')">1. Planejamento</button>
+      <button class="tab-btn" onclick="changeTab('temas')">2. Temas</button>
+      <button class="tab-btn" onclick="changeTab('producao')">3. Produção KV</button>
+      <button class="tab-btn" onclick="changeTab('validacao')">4. Validação</button>
+      <button class="tab-btn" onclick="changeTab('kickoff')">5. Kick-off</button>
+      <button class="tab-btn" onclick="changeTab('subida')">6. Subida</button>
+    </div>
+
+    <div class="content">
+      <div id="calendario" class="tab-content active">
+        <div class="tab-title">Calendário de Campanhas</div>
+        <div class="tab-subtitle">Visualize as fases do mês com cores - múltiplas campanhas por dia</div>
+
+        <div class="calendar-controls">
+          <div class="month-selector">
+            <select id="monthSelect" onchange="changeMonth()">
+              <option value="0">Janeiro</option>
+              <option value="1">Fevereiro</option>
+              <option value="2">Março</option>
+              <option value="3">Abril</option>
+              <option value="4">Maio</option>
+              <option value="5">Junho</option>
+              <option value="6">Julho</option>
+              <option value="7">Agosto</option>
+              <option value="8">Setembro</option>
+              <option value="9">Outubro</option>
+              <option value="10">Novembro</option>
+              <option value="11">Dezembro</option>
+            </select>
+            <select id="yearSelect" onchange="changeMonth()">
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026" selected>2026</option>
+              <option value="2027">2027</option>
+            </select>
+            <button onclick="clearMonth()">Limpar mês</button>
+          </div>
+        </div>
+
+        <div class="status-summary" id="statusSummary"></div>
+
+        <div class="tab-title" id="calendarTitle" style="margin-bottom: 12px; font-size: 16px;">Junho 2026</div>
+        
+        <div class="calendar-header">
+          <div class="day-header">Dom</div>
+          <div class="day-header">Seg</div>
+          <div class="day-header">Ter</div>
+          <div class="day-header">Qua</div>
+          <div class="day-header">Qui</div>
+          <div class="day-header">Sex</div>
+          <div class="day-header">Sab</div>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid"></div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-color planejamento"></div>
+            <span class="legend-label">Planejamento</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color temas"></div>
+            <span class="legend-label">Temas</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color producao"></div>
+            <span class="legend-label">Briefing/Produção KV</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color validacao"></div>
+            <span class="legend-label">Validação</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color kickoff"></div>
+            <span class="legend-label">Kick-off</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color subida"></div>
+            <span class="legend-label">Subida</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="planejamento" class="tab-content">
+        <div class="tab-title">1. Planejamento</div>
+        <div class="tab-subtitle">Fase de iniciação e definição de escopo</div>
+        <table id="table-planejamento">
+          <thead>
+            <tr>
+              <th>Data/Período</th>
+              <th>Status</th>
+              <th>Responsável</th>
+              <th>Descrição</th>
+              <th>Observações</th>
+              <th style="width: 80px;">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-planejamento"></tbody>
+        </table>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="addRow('planejamento')">+ Adicionar</button>
+        </div>
+      </div>
+
+      <div id="temas" class="tab-content">
+        <div class="tab-title">2. Sugestão de Temas</div>
+        <div class="tab-subtitle">Ideação e proposição de direções criativas</div>
+        <table id="table-temas">
+          <thead>
+            <tr>
+              <th>Data/Período</th>
+              <th>Status</th>
+              <th>Responsável</th>
+              <th>Descrição</th>
+              <th>Observações</th>
+              <th style="width: 80px;">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-temas"></tbody>
+        </table>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="addRow('temas')">+ Adicionar</button>
+        </div>
+      </div>
+
+      <div id="producao" class="tab-content">
+        <div class="tab-title">3. Produção de KV</div>
+        <div class="tab-subtitle">Desenvolvimento de assets criativos</div>
+        <table id="table-producao">
+          <thead>
+            <tr>
+              <th>Data início</th>
+              <th>SLA produção</th>
+              <th>Validação KV</th>
+              <th>Responsável</th>
+              <th>Status</th>
+              <th style="width: 80px;">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-producao"></tbody>
+        </table>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="addRow('producao')">+ Adicionar</button>
+        </div>
+      </div>
+
+      <div id="validacao" class="tab-content">
+        <div class="tab-title">4. Validação Marketing</div>
+        <div class="tab-subtitle">Aprovação estratégica e alinhamento</div>
+        <table id="table-validacao">
+          <thead>
+            <tr>
+              <th>Data/Período</th>
+              <th>Status</th>
+              <th>Responsável</th>
+              <th>Descrição</th>
+              <th>Observações</th>
+              <th style="width: 80px;">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-validacao"></tbody>
+        </table>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="addRow('validacao')">+ Adicionar</button>
+        </div>
+      </div>
+
+      <div id="kickoff" class="tab-content">
+        <div class="tab-title">5. Kick-off Design</div>
+        <div class="tab-subtitle">Alinhamento de briefing e cronograma</div>
+        <table id="table-kickoff">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Por quê?</th>
+              <th>Dados</th>
+              <th>Briefing</th>
+              <th>Datas alinhadas</th>
+              <th>Status</th>
+              <th style="width: 80px;">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-kickoff"></tbody>
+        </table>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="addRow('kickoff')">+ Adicionar</button>
+        </div>
+      </div>
+
+      <div id="subida" class="tab-content">
+        <div class="tab-title">6. Subida - Ativação da Campanha</div>
+        <div class="tab-subtitle">Início da campanha - ativação em todos os canais</div>
+        <table id="table-subida">
+          <thead>
+            <tr>
+              <th>Data de Subida</th>
+              <th>Canais Ativados</th>
+              <th>Responsável</th>
+              <th>Status</th>
+              <th>Observações</th>
+              <th style="width: 80px;">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-subida"></tbody>
+        </table>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="addRow('subida')">+ Adicionar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="phaseModal">
+    <div class="modal-content">
+      <div class="modal-title" id="modalTitle">Dia 15 - Junho 2026</div>
+      <div class="modal-subtitle">Gerencie as campanhas do dia</div>
+      
+      <div class="campaigns-list" id="campaignsList"></div>
+
+      <div class="campaign-form" id="campaignForm">
+        <div class="form-group">
+          <label>Nome da Campanha:</label>
+          <input type="text" id="campaignName" placeholder="Ex: Black Friday, Copa do Mundo...">
+        </div>
+        
+        <label style="font-size: 11px; font-weight: 600; color: #333; display: block; margin-bottom: 6px;">Fases:</label>
+        <div class="phase-buttons" id="phaseButtons"></div>
+        
+        <div class="form-actions">
+          <button class="btn-add" onclick="saveCampaign()">+ Adicionar Campanha</button>
+          <button class="btn-cancel" onclick="cancelCampaign()">Cancelar</button>
+        </div>
+      </div>
+
+      <button class="clear-btn" onclick="clearDay()">Limpar todos os dados do dia</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, setDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAR6zhODoNBRsu8UYWRzoMKEcBNEhowq9I",
+      authDomain: "planejamento-campanhas-2989b.firebaseapp.com",
+      projectId: "planejamento-campanhas-2989b",
+      storageBucket: "planejamento-campanhas-2989b.firebasestorage.app",
+      messagingSenderId: "63863426454",
+      appId: "1:63863426454:web:72be8bba04e90f177121b7",
+      measurementId: "G-WEJSBG69BF"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // Anonymous Sign In
+    signInAnonymously(auth).catch(err => console.log("Auth error:", err));
+
+    // Global variables
+    const statusOptions = ['Não iniciado', 'Em andamento', 'Concluído', 'Bloqueado'];
+    const phases = [
+      { id: 'planejamento', label: 'Planejamento' },
+      { id: 'temas', label: 'Temas' },
+      { id: 'producao', label: 'Produção KV' },
+      { id: 'validacao', label: 'Validação' },
+      { id: 'kickoff', label: 'Kick-off' },
+      { id: 'subida', label: 'Subida' }
+    ];
+
+    let data = { planejamento: [], temas: [], producao: [], validacao: [], kickoff: [], subida: [] };
+    let calendarData = {};
+    let selectedDay = null;
+    let editingCampaignIndex = null;
+    let selectedMonth = new Date().getMonth();
+    let selectedYear = new Date().getFullYear();
+    let firebaseReady = false;
+
+    // Load data from localStorage immediately
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem('campaign_tracker_guanabara');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          data = parsed.data || data;
+          calendarData = parsed.calendarData || calendarData;
+          console.log("✅ Dados carregados do localStorage!");
+          renderCalendar();
+          updateStatusSummary();
+          return true;
+        } catch (e) {
+          console.error("Erro ao carregar dados:", e);
+        }
+      }
+      return false;
+    }
+
+    // Migrate data from localStorage to Firebase
+    function migrateFromLocalStorage() {
+      const saved = localStorage.getItem('campaign_tracker_guanabara');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.calendarData) {
+            Object.keys(parsed.calendarData).forEach(dateKey => {
+              setDoc(doc(db, 'calendario', dateKey), parsed.calendarData[dateKey]);
+            });
+          }
+          if (parsed.data) {
+            Object.keys(parsed.data).forEach(phase => {
+              parsed.data[phase].forEach((row, idx) => {
+                setDoc(doc(db, phase, `${phase}_${idx}`), row);
+              });
+            });
+          }
+          console.log("✅ Dados migrados do localStorage para Firebase!");
+          localStorage.removeItem('campaign_tracker_guanabara');
+        } catch (e) {
+          console.error("Erro ao migrar dados:", e);
+        }
+      }
+    }
+
+    // Listen to calendar data from Firestore
+    onSnapshot(collection(db, 'calendario'), (snapshot) => {
+      calendarData = {};
+      snapshot.forEach(doc => {
+        calendarData[doc.id] = doc.data();
+      });
+      renderCalendar();
+      updateStatusSummary();
+      updateSyncStatus(true);
+      firebaseReady = true;
+    }, (error) => {
+      console.error("Error loading calendar:", error);
+      updateSyncStatus(false);
+    });
+
+    // Load from localStorage immediately, then migrate to Firebase
+    loadFromLocalStorage();
+    
+    // Trigger migration after a delay
+    setTimeout(() => {
+      migrateFromLocalStorage();
+    }, 2000);
+
+    // Listen to table data from Firestore
+    Object.keys(data).forEach(phase => {
+      onSnapshot(collection(db, phase), (snapshot) => {
+        data[phase] = [];
+        snapshot.forEach(doc => {
+          data[phase].push(doc.data());
+        });
+        renderTable(phase);
+      }, (error) => {
+        console.error(`Error loading ${phase}:`, error);
+      });
+    });
+
+    // Global scope functions
+    function changeTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+    };
+
+    function renderTable(phase) {
+      const tbody = document.getElementById(`tbody-${phase}`);
+      tbody.innerHTML = '';
+
+      if (data[phase].length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 30px; color: #999; font-size: 12px;">Nenhum registro.</td></tr>';
+        return;
+      }
+
+      data[phase].forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        
+        if (phase === 'kickoff') {
+          tr.innerHTML = `
+            <td><input type="text" value="${row.data || ''}" onchange="updateRow('${phase}', ${idx}, 'data', this.value)"></td>
+            <td><input type="text" value="${row.porque || ''}" onchange="updateRow('${phase}', ${idx}, 'porque', this.value)"></td>
+            <td><input type="text" value="${row.dados || ''}" onchange="updateRow('${phase}', ${idx}, 'dados', this.value)"></td>
+            <td><input type="text" value="${row.briefing || ''}" onchange="updateRow('${phase}', ${idx}, 'briefing', this.value)"></td>
+            <td><input type="text" value="${row.datas || ''}" onchange="updateRow('${phase}', ${idx}, 'datas', this.value)"></td>
+            <td><select onchange="updateRow('${phase}', ${idx}, 'status', this.value)">${statusOptions.map(s => `<option ${row.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
+            <td><button class="btn-remove" onclick="deleteRow('${phase}', ${idx})">Remover</button></td>
+          `;
+        } else if (phase === 'producao') {
+          tr.innerHTML = `
+            <td><input type="text" value="${row.dataInicio || ''}" onchange="updateRow('${phase}', ${idx}, 'dataInicio', this.value)"></td>
+            <td><input type="text" value="${row.sla || ''}" onchange="updateRow('${phase}', ${idx}, 'sla', this.value)"></td>
+            <td><input type="text" value="${row.validacao || ''}" onchange="updateRow('${phase}', ${idx}, 'validacao', this.value)"></td>
+            <td><input type="text" value="${row.responsavel || ''}" onchange="updateRow('${phase}', ${idx}, 'responsavel', this.value)"></td>
+            <td><select onchange="updateRow('${phase}', ${idx}, 'status', this.value)">${statusOptions.map(s => `<option ${row.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
+            <td><button class="btn-remove" onclick="deleteRow('${phase}', ${idx})">Remover</button></td>
+          `;
+        } else if (phase === 'subida') {
+          tr.innerHTML = `
+            <td><input type="text" value="${row.data || ''}" onchange="updateRow('${phase}', ${idx}, 'data', this.value)"></td>
+            <td><input type="text" value="${row.canais || ''}" onchange="updateRow('${phase}', ${idx}, 'canais', this.value)"></td>
+            <td><input type="text" value="${row.responsavel || ''}" onchange="updateRow('${phase}', ${idx}, 'responsavel', this.value)"></td>
+            <td><select onchange="updateRow('${phase}', ${idx}, 'status', this.value)">${statusOptions.map(s => `<option ${row.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
+            <td><input type="text" value="${row.obs || ''}" onchange="updateRow('${phase}', ${idx}, 'obs', this.value)"></td>
+            <td><button class="btn-remove" onclick="deleteRow('${phase}', ${idx})">Remover</button></td>
+          `;
+        } else {
+          tr.innerHTML = `
+            <td><input type="text" value="${row.data || ''}" onchange="updateRow('${phase}', ${idx}, 'data', this.value)"></td>
+            <td><select onchange="updateRow('${phase}', ${idx}, 'status', this.value)">${statusOptions.map(s => `<option ${row.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
+            <td><input type="text" value="${row.responsavel || ''}" onchange="updateRow('${phase}', ${idx}, 'responsavel', this.value)"></td>
+            <td><input type="text" value="${row.descricao || ''}" onchange="updateRow('${phase}', ${idx}, 'descricao', this.value)"></td>
+            <td><input type="text" value="${row.obs || ''}" onchange="updateRow('${phase}', ${idx}, 'obs', this.value)"></td>
+            <td><button class="btn-remove" onclick="deleteRow('${phase}', ${idx})">Remover</button></td>
+          `;
+        }
+        tbody.appendChild(tr);
+      });
+    };
+
+    function addRow(phase) {
+      const newRow = phase === 'kickoff' ? { data: '', porque: '', dados: '', briefing: '', datas: '', status: 'Não iniciado' }
+                    : phase === 'producao' ? { dataInicio: '', sla: '', validacao: '', responsavel: '', status: 'Não iniciado' }
+                    : phase === 'subida' ? { data: '', canais: '', responsavel: '', status: 'Não iniciado', obs: '' }
+                    : { data: '', status: 'Não iniciado', responsavel: '', descricao: '', obs: '' };
+      
+      const id = `${phase}_${Date.now()}`;
+      setDoc(doc(db, phase, id), newRow).catch(err => console.error("Error adding row:", err));
+    };
+
+    function updateRow(phase, idx, field, value) {
+      if (data[phase][idx]) {
+        data[phase][idx][field] = value;
+        const id = `${phase}_${idx}`;
+        setDoc(doc(db, phase, id), data[phase][idx]).catch(err => console.error("Error updating row:", err));
+      }
+    };
+
+    function deleteRow(phase, idx) {
+      if (confirm('Remover esta linha?')) {
+        const id = `${phase}_${idx}`;
+        deleteDoc(doc(db, phase, id)).catch(err => console.error("Error deleting row:", err));
+      }
+    };
+
+    function getDaysInMonth(month, year) {
+      return new Date(year, month + 1, 0).getDate();
+    }
+
+    function getFirstDayOfMonth(month, year) {
+      return new Date(year, month, 1).getDay();
+    }
+
+    function getDateKey(day, month, year) {
+      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+
+    function renderCalendar() {
+      const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
+      const firstDay = getFirstDayOfMonth(selectedMonth, selectedYear);
+      const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+      
+      document.getElementById('calendarTitle').textContent = `${monthNames[selectedMonth]} ${selectedYear}`;
+      
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
+
+      for (let i = 0; i < firstDay; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'day-cell empty';
+        grid.appendChild(cell);
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateKey = getDateKey(day, selectedMonth, selectedYear);
+        const campaigns = calendarData[dateKey] || [];
+        
+        const cell = document.createElement('div');
+        cell.className = 'day-cell';
+        
+        let html = `<span class="day-number">${day}</span>`;
+        
+        if (campaigns.length > 0) {
+          const firstCampaign = campaigns[0];
+          if (firstCampaign.name) {
+            html += `<div class="day-campaign" title="${firstCampaign.name}">${firstCampaign.name}</div>`;
+          }
+          
+          const allPhases = [];
+          campaigns.forEach(c => {
+            if (c.phases) allPhases.push(...c.phases);
+          });
+          
+          const uniquePhases = [...new Set(allPhases)];
+          
+          if (uniquePhases.length > 0) {
+            if (uniquePhases.length === 1) {
+              cell.style.background = getPhaseColor(uniquePhases[0]);
+            } else {
+              let colorsDivs = '';
+              uniquePhases.slice(0, 4).forEach((phase) => {
+                colorsDivs += `<div class="color-segment color-${phase}"></div>`;
+              });
+              html += `<div class="day-colors">${colorsDivs}</div>`;
+            }
+          }
+        }
+        
+        cell.innerHTML = html;
+        cell.onclick = () => openPhaseModal(day, dateKey);
+        grid.appendChild(cell);
+      }
+    };
+
+    function getPhaseColor(phaseId) {
+      const colors = { planejamento: '#3B82F6', temas: '#9F5BED', producao: '#EC4899', validacao: '#10B981', kickoff: '#F59E0B', subida: '#14B8A6' };
+      return colors[phaseId] || '#ffffff';
+    }
+
+    function openPhaseModal(day, dateKey) {
+      selectedDay = { day, dateKey };
+      editingCampaignIndex = null;
+      const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+      
+      document.getElementById('modalTitle').textContent = `Dia ${day} - ${monthNames[selectedMonth]} ${selectedYear}`;
+      document.getElementById('campaignName').value = '';
+      
+      renderCampaignsList();
+      renderPhaseButtons();
+      
+      document.getElementById('phaseModal').classList.add('active');
+    };
+
+    function renderCampaignsList() {
+      const campaigns = calendarData[selectedDay.dateKey] || [];
+      const list = document.getElementById('campaignsList');
+      
+      if (campaigns.length === 0) {
+        list.innerHTML = '<div style="padding: 12px; color: #999; font-size: 12px; text-align: center;">Nenhuma campanha ainda</div>';
+        return;
+      }
+      
+      list.innerHTML = campaigns.map((campaign, idx) => `
+        <div class="campaign-item">
+          <div class="campaign-item-name">${campaign.name || '(sem nome)'}</div>
+          <div class="campaign-item-actions">
+            <button class="campaign-item-btn edit" onclick="editCampaign(${idx})">Editar</button>
+            <button class="campaign-item-btn remove" onclick="removeCampaign(${idx})">Remover</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderPhaseButtons() {
+      const phaseButtons = document.getElementById('phaseButtons');
+      phaseButtons.innerHTML = '';
+      
+      const currentPhases = editingCampaignIndex !== null && calendarData[selectedDay.dateKey] 
+        ? (calendarData[selectedDay.dateKey][editingCampaignIndex].phases || [])
+        : [];
+      
+      phases.forEach(phase => {
+        const btn = document.createElement('button');
+        btn.className = `phase-btn ${phase.id}`;
+        btn.textContent = phase.label;
+        
+        if (currentPhases.includes(phase.id)) {
+          btn.classList.add('active');
+        }
+        
+        btn.onclick = () => togglePhaseBtn(phase.id, btn);
+        phaseButtons.appendChild(btn);
+      });
+    }
+
+    function togglePhaseBtn(phaseId, btn) {
+      btn.classList.toggle('active');
+    }
+
+    function saveCampaign() {
+      const name = document.getElementById('campaignName').value.trim();
+      if (!name) {
+        alert('Digite o nome da campanha');
+        return;
+      }
+      
+      const selectedPhases = Array.from(document.querySelectorAll('.phase-btn.active')).map(btn => {
+        for (let phase of phases) {
+          if (btn.textContent === phase.label) return phase.id;
+        }
+      }).filter(Boolean);
+      
+      if (selectedPhases.length === 0) {
+        alert('Selecione pelo menos uma fase');
+        return;
+      }
+      
+      const campaign = { name, phases: selectedPhases };
+      
+      if (!calendarData[selectedDay.dateKey]) {
+        calendarData[selectedDay.dateKey] = [];
+      }
+      
+      if (editingCampaignIndex !== null) {
+        calendarData[selectedDay.dateKey][editingCampaignIndex] = campaign;
+      } else {
+        calendarData[selectedDay.dateKey].push(campaign);
+      }
+      
+      setDoc(doc(db, 'calendario', selectedDay.dateKey), calendarData[selectedDay.dateKey]).catch(err => console.error("Error saving campaign:", err));
+      
+      document.getElementById('campaignName').value = '';
+      editingCampaignIndex = null;
+      renderCampaignsList();
+      renderPhaseButtons();
+    };
+
+    function editCampaign(idx) {
+      const campaign = calendarData[selectedDay.dateKey][idx];
+      editingCampaignIndex = idx;
+      document.getElementById('campaignName').value = campaign.name;
+      renderPhaseButtons();
+    };
+
+    function removeCampaign(idx) {
+      if (confirm('Remover esta campanha?')) {
+        calendarData[selectedDay.dateKey].splice(idx, 1);
+        if (calendarData[selectedDay.dateKey].length === 0) {
+          deleteDoc(doc(db, 'calendario', selectedDay.dateKey)).catch(err => console.error("Error deleting day:", err));
+        } else {
+          setDoc(doc(db, 'calendario', selectedDay.dateKey), calendarData[selectedDay.dateKey]).catch(err => console.error("Error updating day:", err));
+        }
+        renderCampaignsList();
+      }
+    };
+
+    function cancelCampaign() {
+      document.getElementById('campaignName').value = '';
+      editingCampaignIndex = null;
+      renderPhaseButtons();
+    };
+
+    function clearDay() {
+      if (confirm('Tem certeza que deseja limpar todos os dados deste dia?')) {
+        deleteDoc(doc(db, 'calendario', selectedDay.dateKey)).catch(err => console.error("Error deleting day:", err));
+        closeModal();
+      }
+    };
+
+    function clearMonth() {
+      if (confirm('Tem certeza que deseja limpar todos os dias do mês?')) {
+        const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateKey = getDateKey(day, selectedMonth, selectedYear);
+          if (calendarData[dateKey]) {
+            deleteDoc(doc(db, 'calendario', dateKey)).catch(err => console.error("Error deleting day:", err));
+          }
+        }
+      }
+    };
+
+    function closeModal() {
+      document.getElementById('phaseModal').classList.remove('active');
+    };
+
+    function changeMonth() {
+      selectedMonth = parseInt(document.getElementById('monthSelect').value);
+      selectedYear = parseInt(document.getElementById('yearSelect').value);
+      renderCalendar();
+    };
+
+    function updateStatusSummary() {
+      const summary = {};
+      phases.forEach(phase => { summary[phase.id] = 0; });
+
+      Object.values(calendarData).forEach(campaignList => {
+        if (Array.isArray(campaignList)) {
+          campaignList.forEach(campaign => {
+            const phaseList = campaign.phases || [];
+            phaseList.forEach(phase => {
+              if (summary.hasOwnProperty(phase)) summary[phase]++;
+            });
+          });
+        }
+      });
+
+      const summaryContainer = document.getElementById('statusSummary');
+      summaryContainer.innerHTML = phases.map(phase => `
+        <div class="status-card ${phase.id}">
+          <div class="status-label">${phase.label}</div>
+          <div class="status-count">${summary[phase.id]} dias</div>
+        </div>
+      `).join('');
+    };
+
+    function updateSyncStatus(isOnline) {
+      const status = document.getElementById('syncStatus');
+      if (isOnline) {
+        status.textContent = '✅ Sincronizado';
+        status.className = 'sync-status online';
+      } else {
+        status.textContent = '⚠️ Offline';
+        status.className = 'sync-status offline';
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'phaseModal') closeModal();
+    });
+
+    // Initialize
+    window.addEventListener('load', () => {
+      const today = new Date();
+      selectedMonth = today.getMonth();
+      selectedYear = today.getFullYear();
+      document.getElementById('monthSelect').value = selectedMonth;
+      document.getElementById('yearSelect').value = selectedYear;
+    });
+
+    // Expose all functions to global scope
+    window.changeTab = changeTab;
+    window.renderTable = renderTable;
+    window.addRow = addRow;
+    window.updateRow = updateRow;
+    window.deleteRow = deleteRow;
+    window.renderCalendar = renderCalendar;
+    window.openPhaseModal = openPhaseModal;
+    window.saveCampaign = saveCampaign;
+    window.editCampaign = editCampaign;
+    window.removeCampaign = removeCampaign;
+    window.cancelCampaign = cancelCampaign;
+    window.clearDay = clearDay;
+    window.clearMonth = clearMonth;
+    window.closeModal = closeModal;
+    window.changeMonth = changeMonth;
+    window.updateStatusSummary = updateStatusSummary;
+  </script>
+</body>
+</html>
