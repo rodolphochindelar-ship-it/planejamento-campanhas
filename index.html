@@ -255,6 +255,22 @@
       border: none;
     }
 
+    .day-color-bar {
+      width: 100%;
+      height: 8px;
+      display: flex;
+      gap: 1px;
+      border-radius: 2px;
+      margin-top: auto;
+      background: transparent;
+    }
+
+    .color-bar {
+      flex: 1;
+      height: 100%;
+      border-radius: 1px;
+    }
+
     .color-planejamento { background: #3B82F6; }
     .color-temas { background: #9F5BED; }
     .color-producao { background: #EC4899; }
@@ -953,7 +969,7 @@
     const phases = [
       { id: 'planejamento', label: 'Planejamento' },
       { id: 'temas', label: 'Temas' },
-      { id: 'producao', label: 'Produção KV' },
+      { id: 'producao', label: 'Briefing/Produção KV' },
       { id: 'validacao', label: 'Validação' },
       { id: 'kickoff', label: 'Kick-off' },
       { id: 'subida', label: 'Subida' }
@@ -1197,17 +1213,13 @@
           console.log(`  🎨 Fases únicas:`, uniquePhases);
           
           if (uniquePhases.length > 0) {
-            if (uniquePhases.length === 1) {
-              cell.style.background = getPhaseColor(uniquePhases[0]);
-              console.log(`  🎨 Cor aplicada:`, getPhaseColor(uniquePhases[0]));
-            } else {
-              let colorsDivs = '';
-              uniquePhases.slice(0, 4).forEach((phase) => {
-                colorsDivs += `<div class="color-segment color-${phase}"></div>`;
-              });
-              html += `<div class="day-colors">${colorsDivs}</div>`;
-              console.log(`  🎨 Múltiplas cores aplicadas`);
-            }
+            // Cria uma barra colorida com as fases
+            let colorBars = '';
+            uniquePhases.forEach((phase) => {
+              colorBars += `<div class="color-bar color-${phase}"></div>`;
+            });
+            html += `<div class="day-color-bar">${colorBars}</div>`;
+            console.log(`  🎨 Barra de cores criada`);
           }
         }
         
