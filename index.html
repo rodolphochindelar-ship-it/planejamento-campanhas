@@ -1299,12 +1299,22 @@
         calendarData[selectedDay.dateKey].push(campaign);
       }
       
-      setDoc(doc(db, 'calendario', selectedDay.dateKey), calendarData[selectedDay.dateKey]).catch(err => console.error("Error saving campaign:", err));
+      console.log("Salvando campanha:", campaign, "em:", selectedDay.dateKey);
       
-      document.getElementById('campaignName').value = '';
-      editingCampaignIndex = null;
-      renderCampaignsList();
-      renderPhaseButtons();
+      setDoc(doc(db, 'calendario', selectedDay.dateKey), calendarData[selectedDay.dateKey])
+        .then(() => {
+          console.log("✅ Campanha salva com sucesso!");
+          document.getElementById('campaignName').value = '';
+          editingCampaignIndex = null;
+          renderCampaignsList();
+          renderPhaseButtons();
+          renderCalendar();
+          updateStatusSummary();
+        })
+        .catch(err => {
+          console.error("❌ Erro ao salvar campanha:", err);
+          alert("Erro ao salvar: " + err.message);
+        });
     };
 
     function editCampaign(idx) {
@@ -1318,11 +1328,24 @@
       if (confirm('Remover esta campanha?')) {
         calendarData[selectedDay.dateKey].splice(idx, 1);
         if (calendarData[selectedDay.dateKey].length === 0) {
-          deleteDoc(doc(db, 'calendario', selectedDay.dateKey)).catch(err => console.error("Error deleting day:", err));
+          deleteDoc(doc(db, 'calendario', selectedDay.dateKey))
+            .then(() => {
+              console.log("✅ Dia removido com sucesso!");
+              renderCampaignsList();
+              renderCalendar();
+              updateStatusSummary();
+            })
+            .catch(err => console.error("Erro ao deletar dia:", err));
         } else {
-          setDoc(doc(db, 'calendario', selectedDay.dateKey), calendarData[selectedDay.dateKey]).catch(err => console.error("Error updating day:", err));
+          setDoc(doc(db, 'calendario', selectedDay.dateKey), calendarData[selectedDay.dateKey])
+            .then(() => {
+              console.log("✅ Campanha removida com sucesso!");
+              renderCampaignsList();
+              renderCalendar();
+              updateStatusSummary();
+            })
+            .catch(err => console.error("Erro ao atualizar dia:", err));
         }
-        renderCampaignsList();
       }
     };
 
