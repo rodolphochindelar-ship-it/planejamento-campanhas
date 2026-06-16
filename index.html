@@ -1016,7 +1016,9 @@
     onSnapshot(collection(db, 'calendario'), (snapshot) => {
       calendarData = {};
       snapshot.forEach(doc => {
-        calendarData[doc.id] = doc.data();
+        const data = doc.data();
+        // Desembrulhar: se vem com .campaigns, usar isso; senão usar direto (compatibilidade)
+        calendarData[doc.id] = data.campaigns || data;
       });
       renderCalendar();
       updateStatusSummary();
@@ -1148,6 +1150,9 @@
     }
 
     function renderCalendar() {
+      console.log("🔄 Iniciando renderCalendar()...");
+      console.log("📊 calendarData completo:", calendarData);
+      
       const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
       const firstDay = getFirstDayOfMonth(selectedMonth, selectedYear);
       const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -1156,6 +1161,7 @@
       
       const grid = document.getElementById('calendarGrid');
       grid.innerHTML = '';
+      console.log("✅ Grid limpado");
 
       for (let i = 0; i < firstDay; i++) {
         const cell = document.createElement('div');
@@ -1167,12 +1173,16 @@
         const dateKey = getDateKey(day, selectedMonth, selectedYear);
         const campaigns = calendarData[dateKey] || [];
         
+        console.log(`📅 Dia ${day} (${dateKey}):`, campaigns);
+        
         const cell = document.createElement('div');
         cell.className = 'day-cell';
         
         let html = `<span class="day-number">${day}</span>`;
         
         if (campaigns.length > 0) {
+          console.log(`  ✅ ${campaigns.length} campanha(s) encontrada(s)`);
+          
           const firstCampaign = campaigns[0];
           if (firstCampaign.name) {
             html += `<div class="day-campaign" title="${firstCampaign.name}">${firstCampaign.name}</div>`;
@@ -1184,16 +1194,19 @@
           });
           
           const uniquePhases = [...new Set(allPhases)];
+          console.log(`  🎨 Fases únicas:`, uniquePhases);
           
           if (uniquePhases.length > 0) {
             if (uniquePhases.length === 1) {
               cell.style.background = getPhaseColor(uniquePhases[0]);
+              console.log(`  🎨 Cor aplicada:`, getPhaseColor(uniquePhases[0]));
             } else {
               let colorsDivs = '';
               uniquePhases.slice(0, 4).forEach((phase) => {
                 colorsDivs += `<div class="color-segment color-${phase}"></div>`;
               });
               html += `<div class="day-colors">${colorsDivs}</div>`;
+              console.log(`  🎨 Múltiplas cores aplicadas`);
             }
           }
         }
@@ -1202,6 +1215,8 @@
         cell.onclick = () => openPhaseModal(day, dateKey);
         grid.appendChild(cell);
       }
+      
+      console.log("✅ renderCalendar() concluído!");
     };
 
     function getPhaseColor(phaseId) {
@@ -1271,6 +1286,8 @@
 
     function saveCampaign() {
       const name = document.getElementById('campaignName').value.trim();
+      console.log("1️⃣ Nome digitado:", name);
+      
       if (!name) {
         alert('Digite o nome da campanha');
         return;
@@ -1282,12 +1299,15 @@
         }
       }).filter(Boolean);
       
+      console.log("2️⃣ Fases selecionadas:", selectedPhases);
+      
       if (selectedPhases.length === 0) {
         alert('Selecione pelo menos uma fase');
         return;
       }
       
       const campaign = { name, phases: selectedPhases };
+      console.log("3️⃣ Campanha criada:", campaign);
       
       if (!calendarData[selectedDay.dateKey]) {
         calendarData[selectedDay.dateKey] = [];
@@ -1299,22 +1319,39 @@
         calendarData[selectedDay.dateKey].push(campaign);
       }
       
-      console.log("Salvando campanha:", campaign, "em:", selectedDay.dateKey);
+      console.log("4️⃣ Calendário atualizado:", calendarData[selectedDay.dateKey]);
       
-      setDoc(doc(db, 'calendario', selectedDay.dateKey), calendarData[selectedDay.dateKey])
-        .then(() => {
-          console.log("✅ Campanha salva com sucesso!");
-          document.getElementById('campaignName').value = '';
-          editingCampaignIndex = null;
-          renderCampaignsList();
-          renderPhaseButtons();
-          renderCalendar();
-          updateStatusSummary();
+      // Salva em localStorage IMEDIATAMENTE
+      const saved = localStorage.getItem('campaign_tracker_guanabara') ? JSON.parse(localStorage.getItem('campaign_tracker_guanabara')) : {};
+      saved.calendarData = calendarData;
+      localStorage.setItem('campaign_tracker_guanabara', JSON.stringify(saved));
+      console.log("5️⃣ ✅ Salvo em localStorage!");
+      
+      // Sincroniza com Firebase em background
+      if (firebaseReady && db) {
+        setDoc(doc(db, 'calendario', selectedDay.dateKey), {
+          campaigns: calendarData[selectedDay.dateKey]
         })
-        .catch(err => {
-          console.error("❌ Erro ao salvar campanha:", err);
-          alert("Erro ao salvar: " + err.message);
-        });
+          .then(() => console.log("6️⃣ ✅ Sincronizado com Firebase!"))
+          .catch(err => console.error("7️⃣ ⚠️ Erro Firebase:", err.message));
+      }
+      
+      // Limpa o formulário
+      document.getElementById('campaignName').value = '';
+      editingCampaignIndex = null;
+      
+      // Renderiza tudo
+      console.log("8️⃣ Renderizando...");
+      renderCampaignsList();
+      renderPhaseButtons();
+      renderCalendar();
+      updateStatusSummary();
+      
+      // FECHA O MODAL APÓS SALVAR
+      setTimeout(() => {
+        closeModal();
+        alert('✅ Campanha adicionada com sucesso!');
+      }, 500);
     };
 
     function editCampaign(idx) {
@@ -1327,25 +1364,26 @@
     function removeCampaign(idx) {
       if (confirm('Remover esta campanha?')) {
         calendarData[selectedDay.dateKey].splice(idx, 1);
-        if (calendarData[selectedDay.dateKey].length === 0) {
-          deleteDoc(doc(db, 'calendario', selectedDay.dateKey))
-            .then(() => {
-              console.log("✅ Dia removido com sucesso!");
-              renderCampaignsList();
-              renderCalendar();
-              updateStatusSummary();
-            })
-            .catch(err => console.error("Erro ao deletar dia:", err));
-        } else {
-          setDoc(doc(db, 'calendario', selectedDay.dateKey), calendarData[selectedDay.dateKey])
-            .then(() => {
-              console.log("✅ Campanha removida com sucesso!");
-              renderCampaignsList();
-              renderCalendar();
-              updateStatusSummary();
-            })
-            .catch(err => console.error("Erro ao atualizar dia:", err));
+        
+        // Salva em localStorage
+        const saved = localStorage.getItem('campaign_tracker_guanabara') ? JSON.parse(localStorage.getItem('campaign_tracker_guanabara')) : {};
+        saved.calendarData = calendarData;
+        localStorage.setItem('campaign_tracker_guanabara', JSON.stringify(saved));
+        
+        // Sincroniza com Firebase
+        if (firebaseReady && db) {
+          if (calendarData[selectedDay.dateKey].length === 0) {
+            deleteDoc(doc(db, 'calendario', selectedDay.dateKey)).catch(err => console.error("Erro Firebase:", err));
+          } else {
+            setDoc(doc(db, 'calendario', selectedDay.dateKey), {
+              campaigns: calendarData[selectedDay.dateKey]
+            }).catch(err => console.error("Erro Firebase:", err));
+          }
         }
+        
+        renderCampaignsList();
+        renderCalendar();
+        updateStatusSummary();
       }
     };
 
@@ -1357,7 +1395,20 @@
 
     function clearDay() {
       if (confirm('Tem certeza que deseja limpar todos os dados deste dia?')) {
-        deleteDoc(doc(db, 'calendario', selectedDay.dateKey)).catch(err => console.error("Error deleting day:", err));
+        delete calendarData[selectedDay.dateKey];
+        
+        // Salva em localStorage
+        const saved = localStorage.getItem('campaign_tracker_guanabara') ? JSON.parse(localStorage.getItem('campaign_tracker_guanabara')) : {};
+        saved.calendarData = calendarData;
+        localStorage.setItem('campaign_tracker_guanabara', JSON.stringify(saved));
+        
+        // Sincroniza com Firebase
+        if (firebaseReady && db) {
+          deleteDoc(doc(db, 'calendario', selectedDay.dateKey)).catch(err => console.error("Erro Firebase:", err));
+        }
+        
+        renderCalendar();
+        updateStatusSummary();
         closeModal();
       }
     };
